@@ -25,26 +25,20 @@ class Reloader:
         
         for file in self.files:
             self.mod.append(os.path.getmtime(file))
-        asyncio.create_task(self._start())
+        self.bot.loop.create_task(self._start())
         
     async def _start(self):
+        logger.info("watching changes for files:\n %s " % "\n".join(self.files))
         while True:
             for index, time, file in zip(range(len(self.files)),self.mod,self.files):
                 if os.path.getmtime(file) != time:
-                    if version == "2.0.0a":
-                      try:
+                    try:
                         await self.bot.reload_extension(file.replace("\\",".").replace("/",".")[:-3])
                         logger.info("Reloaded %s Cog" % file)
                         self.mod[index] = os.path.getmtime(file)
-                      except ExtensionError as e:
+                    except ExtensionError as e:
                           logger.error("Cannot reload %s cog:\n" % (file,),exc_info=e)
-                    else:
-                      try:
-                        self.bot.reload_extension(file.replace("\\",".").replace("/",".")[:-3])
-                        logger.info("Reloaded %s Cog" % file)
-                        self.mod[index] = os.path.getmtime(file)
-                      except ExtensionError as e:
-                          logger.error("Cannot reload %s cog:\n" % (file,),from_exc=e)
+                    
             await asyncio.sleep(self.interval)
 
 
